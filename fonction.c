@@ -8,12 +8,63 @@
 #include "math.h"
 #include "time.h"
 
+ void initiliser_hero(Hero hero,int x,int y)
+{
+  hero.x=x;
+  hero.y=y;
+  hero.pos_vie[0].x=0;
+  hero.pos_vie[0].y=30;
+  hero.pos_vie[1].x=0;
+  hero.pos_vie[1].y=60;
+  hero.pos_vie[2].x=0;
+  hero.pos_vie[2].y=90;
+  hero.pos_temps.x=20;
+  hero.pos_temps.y=0;
+  hero.pos_score.x=40;
+  hero.pos_score.y=0;
+  hero.image_hero= SDL_LoadBMP("hero.bmp");
+  hero.vie[0]=SDL_LoadBMP("vie.bmp");
+  hero.vie[1]=SDL_LoadBMP("vie.bmp");
+  hero.vie[2]=SDL_LoadBMP("vie.bmp");
+}
+void afficher_heroi(Hero hero,SDL_Surface *ecran)
+{
+    initiliser_hero(hero,0,650);
+
+    SDL_Rect  pos_hero;
+
+    pos_hero.x=hero.x;
+    pos_hero.y=hero.y;
+
+   // ecran = SDL_SetVideoMode(1509,905, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
+    hero.image_hero= SDL_LoadBMP("hero.bmp");
+    hero.vie[0]=SDL_LoadBMP("vie.bmp");
+    hero.vie[1]=SDL_LoadBMP("vie.bmp");
+    hero.vie[2]=SDL_LoadBMP("vie.bmp");
+  
+        SDL_SetColorKey(hero.image_hero, SDL_SRCCOLORKEY, SDL_MapRGB(hero.image_hero->format, 255, 255,255));
+        SDL_SetColorKey(hero.vie[0], SDL_SRCCOLORKEY, SDL_MapRGB(hero.vie[0]->format, 255, 255,255));
+        SDL_SetColorKey(hero.vie[1], SDL_SRCCOLORKEY, SDL_MapRGB(hero.vie[1]->format, 255, 255,255));
+        SDL_SetColorKey(hero.vie[2], SDL_SRCCOLORKEY, SDL_MapRGB(hero.vie[2]->format, 255, 255,255));
+
+    SDL_BlitSurface(hero.image_hero, NULL, ecran, &pos_hero);
+    SDL_BlitSurface(hero.vie[0], NULL, ecran, &hero.pos_vie[0]);
+    SDL_BlitSurface(hero.vie[1], NULL, ecran, &hero.pos_vie[1]);
+    SDL_BlitSurface(hero.vie[2], NULL, ecran, &hero.pos_vie[2]);
+    SDL_BlitSurface(hero.score, NULL, ecran, &hero.pos_score);
+    SDL_BlitSurface(hero.score, NULL, ecran, &hero.pos_temps);
+    SDL_Flip(ecran);
+
+  
+}
+
  void initiliser_objet(Objet objet,int x,int y)
 {
   objet.x=x;
   objet.y=y;
   objet.image_objet= SDL_LoadBMP("coin.bmp");
 }
+
 
   void initiliser_ennemi(Ennemi ennemi,int x,int y)
 {
@@ -27,15 +78,15 @@ void afficher_ennemi(Ennemi ennemi,SDL_Surface *ecran)
     initiliser_ennemi(ennemi,450,650);
 
     SDL_Rect  pos_ennemi;
+
     pos_ennemi.x=ennemi.x;
     pos_ennemi.y=ennemi.y;
-   int done=1;
+
    // ecran = SDL_SetVideoMode(1509,905, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
-    while(done)
-   {
+    ennemi.image_ennemi= SDL_LoadBMP("coin.bmp");
     SDL_BlitSurface(ennemi.image_ennemi, NULL, ecran, &pos_ennemi);
     SDL_Flip(ecran);
-  }
+  
 }
 
 
@@ -46,6 +97,7 @@ void initiliser_background(Map map,int x,int y)
   map.background= SDL_LoadBMP("first_stage.bmp");
 }
 
+
 void afficher_background(Map map,SDL_Surface *ecran)
 {
     initiliser_background(map,0,0);
@@ -55,6 +107,7 @@ void afficher_background(Map map,SDL_Surface *ecran)
     position_background.y=map.y;
 
     //ecran = SDL_SetVideoMode(1509,905, 32, SDL_HWSURFACE|SDL_DOUBLEBUF);
+    map.background= SDL_LoadBMP("first_stage.bmp");
     SDL_BlitSurface(map.background, NULL, ecran, &position_background);
     SDL_Flip(ecran);
 
@@ -71,6 +124,7 @@ void afficher_background(Map map,SDL_Surface *ecran)
       }
 
   }
+
 
 int collision_trigonometrique(SDL_Rect pos_objet,SDL_Rect pos_hero)
 {
@@ -115,13 +169,14 @@ int collision_trigonometrique(SDL_Rect pos_objet,SDL_Rect pos_hero)
 
 }
 
-int collision_inter_entite(AABB box1,AABB box2)
+
+int collision_inter_entite(Hero hero,Ennemi ennemi)
 {
 	int collision;
-       if((box2.x >= box1.x + box1.w)      // trop à droite
-       || (box2.x + box2.w <= box1.x) // trop à gauche
-	   || (box2.y >= box1.y + box1.h) // trop en bas
-	   || (box2.y + box2.h <= box1.y))  // trop en haut
+       if((ennemi.x >= hero.x + hero.w)      // trop à droite
+       || (ennemi.x + ennemi.w <= hero.x) // trop à gauche
+	   || (ennemi.y >= hero.y + hero.h) // trop en bas
+	   || (ennemi.y + ennemi.h <= hero.y))  // trop en haut
           collision=0; 
    else
           collision=1; 
@@ -180,10 +235,118 @@ int collision_background(SDL_Surface *background_masque,int collision,SDL_Rect p
       return collision;
 }
 
+ 
+
+void gestion_vie_score(Hero hero,SDL_Surface *ecran)
+{
+    Ennemi ennemi;
+    SDL_Rect pos_objet;
+    SDL_Rect pos_hero;
+    Objet objet;
+    SDL_Event event; 
+    TTF_Init();
+    TTF_Font *police = NULL; 
+    SDL_Color couleurNoire = {0, 0, 0}, couleurBlanche = {255, 255, 255}; 
+    int continuer = 1; 
+    int tempsActuel = 0, tempsPrecedent = 0, compteur,compteur_min,score_;
+    compteur=59;
+    compteur_min=4; 
+    score_=0;
+    char temps[50]; /* Tableau de char suffisamment grand */
+    char score_joueur[50];
+
+
+         SDL_Init(SDL_INIT_VIDEO); 
+         ecran = SDL_SetVideoMode(640, 480, 32, SDL_HWSURFACE | SDL_DOUBLEBUF); 
+         SDL_WM_SetCaption("Gestion du texte avec SDL_ttf", NULL);
+         /* Chargement de la police */ 
+         police = TTF_OpenFont("HeartyScript.ttf", 65); 
+         /* Initialisation du temps et du texte */ 
+        /* tempsActuel = SDL_GetTicks(); 
+         sprintf(temps, "Temps : %d s", compteur / 1000);*/
+         //texte = TTF_RenderText_Shaded(police, temps, couleurNoire,couleurBlanche); 
+        /* texte = TTF_RenderText_Blended(police,temps, couleurNoire);
+         score=TTF_RenderText_Blended(police,score_joueur,couleurNoire);*/
+    
+                 while ( continuer )
+                   { 
+
+                        SDL_PollEvent(&event);
+                             switch ( event.type ) 
+                                 { 
+
+                                      case SDL_QUIT: 
+                                          continuer = 0;
+                                           break; 
+                                 }
+
+                         SDL_FillRect(ecran, NULL, SDL_MapRGB(ecran->format, 255, 255, 255));
+                         tempsActuel = SDL_GetTicks(); 
+                          /* Si 100 ms au moins se sont écoulées */ 
+                         if ( tempsActuel - tempsPrecedent == 1000 ) 
+                               {
+      
+                                  compteur -= 1; /* On rajoute 100 ms au compteur */ 
+                                  if(compteur==0)
+                                     {
+                                         compteur_min-=1;
+                                         compteur=59;
+                                           if(compteur_min==0&&compteur==0)
+                                                   continuer=0;
+                                     } 
+                                  sprintf(temps, "Temps : %d :%d",compteur_min, compteur); 
+                                  sprintf(score_joueur,"Score : %d",score_);
+                                  SDL_FreeSurface(hero.temps); /* On supprime la surface précédente */ 
+                                  /* On écrit la chaîne temps dans la SDL_Surface */ 
+                                  //texte = TTF_RenderText_Shaded( police, temps, couleurNoire,couleurBlanche);
+                                  SDL_FreeSurface(hero.score);
+                                  hero.temps =  TTF_RenderText_Shaded(police,temps,couleurNoire,couleurBlanche);
+                                  hero.score =  TTF_RenderText_Shaded(police,score_joueur,couleurNoire,couleurBlanche);
+                                  tempsPrecedent = tempsActuel; /* On met à jour le tempsPrecedent */ 
+
+                              } 
+                          if(collision_trigonometrique(pos_objet,pos_hero)==1)
+                                        score_=score_ + 10;
+
+
+                          if(collision_inter_entite(hero,ennemi)==1)
+                           {
+
+                                 if(hero.vie[0]!=NULL&&hero.vie[1]!=NULL&&hero.vie[2]!=NULL)
+                                       SDL_FreeSurface(hero.vie[2]);
+           
+                                 if(hero.vie[0]!=NULL&&hero.vie[1]!=NULL&&hero.vie[2]==NULL)
+                                       SDL_FreeSurface(hero.vie[1]);
+
+                                 if(hero.vie[0]!=NULL&&hero.vie[1]==NULL&&hero.vie[2]==NULL)
+                                     {
+                                       SDL_FreeSurface(hero.vie[0]);
+                                       continuer=0;
+
+                                     }
+                           }
+                          SDL_BlitSurface(hero.temps, NULL, ecran, &hero.pos_temps); /* Blit du texte */ 
+                          SDL_BlitSurface(hero.score, NULL, ecran, &hero.pos_score); 
+                          SDL_Flip(ecran); 
+                      
+                     }
+        SDL_FreeSurface(hero.temps); 
+        SDL_FreeSurface(hero.score);
+       
+
+        TTF_CloseFont(police); 
+        TTF_Quit();
+        
+     SDL_Quit();
+      
+} 
+
+
 void button_play(SDL_Surface *ecran)
 {
          Map map;
-         
+         Hero hero;
+         Ennemi ennemi; 
          SDL_Surface   *sprite = NULL,*image_menu=NULL,*perso=NULL,*vie1=NULL,*vie2=NULL,*vie3=NULL,*objet=NULL,*background_masque=NULL;
          SDL_Rect  position_menu, positionSprite,position_perso,position_vie1,position_vie2,position_vie3,position_objet,pos_masque;
          SDL_Event event;
@@ -249,32 +412,32 @@ void button_play(SDL_Surface *ecran)
                                    { 
                                        case SDLK_UP: // Flèche haut
                                          //if(positionSprite.y>250)
-                                        if(collision_background(background_masque,collision,positionSprite)==0)
+                                   if((collision_background(background_masque,collision,positionSprite)==0)&&(collision_inter_entite(hero,ennemi)==0)&&(collision_trigonometrique( position_objet, positionSprite)==0))
                                              positionSprite.y-=10; 
                                              
                                         break; 
 
                                        case SDLK_DOWN: // Flèche bas 
                                         // if((positionSprite.y+170)<800)
-                                         if(collision_background(background_masque,collision,positionSprite)==0)
+                                  if((collision_background(background_masque,collision,positionSprite)==0)&&(collision_inter_entite(hero,ennemi)==0)&&(collision_trigonometrique( position_objet,positionSprite)==0))
                                            positionSprite.y+=10; 
                                            break; 
 
                                        case SDLK_RIGHT: // Flèche droite 
                                          // if((positionSprite.x+90)<1509)
-                                         if(collision_background(background_masque,collision,positionSprite)==0)
+                                  if((collision_background(background_masque,collision,positionSprite)==0)&&(collision_inter_entite(hero,ennemi)==0)&&(collision_trigonometrique( position_objet, positionSprite)==0))
                                              positionSprite.x+=10; 
                                         
                                            break; 
 
                                        case SDLK_LEFT: // Flèche gauche 
-                                        if(collision_background(background_masque,collision,positionSprite)==0)
+                                if((collision_background(background_masque,collision,positionSprite)==0)&&(collision_inter_entite(hero,ennemi)==0)&&(collision_trigonometrique( position_objet, positionSprite)==0))
                                            positionSprite.x-=10; 
                                            break; 
                                        
                                     } 
                            break; 
-                  col_trigo=collision_trigonometrique(position_objet,positionSprite);
+                  //col_trigo=collision_trigonometrique(position_objet,positionSprite);
                  // col_inter=collision_inter_entite(s,position)      
                    }
              //afficher_background(map,ecran)
